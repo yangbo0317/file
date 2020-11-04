@@ -1248,5 +1248,43 @@ Localhost:9090/test
 
 
 
-## 五、docker网络
+## 六、docker搭建集群
+
+### 一、redis集群
+
+#### 创建启动配置
+
+```shell
+for port in $(seq 1 6);\
+do \
+mkdir -p /Users/allin264/docker/mydata/redis/node-${port}/conf
+touch /Users/allin264/docker/mydata/redis/node-${port}/conf/redis.conf
+cat << EOF >/Users/allin264/docker/mydata/redis/node-${port}/conf/redis.conf
+port 6379
+bind 0.0.0.0
+cluster-enabled yes
+cluster-config-file node.conf
+cluster-node-timeout 5000
+cluster-announce-ip 192.168.0.1${port}
+cluster-announce-port 6379
+cluster-announce-port 16379
+appendonly yes
+EOF
+done
+```
+
+#### 启动
+
+```
+for num in $(seq 1 6);\
+do \
+docker run -p 637${num}:6379 -p 1637${num}:16379 --name redis-${num} -v /Users/allin264/docker/mydata/redis/node-${num}/data:/data -v /Users/allin264/docker/mydata/redis/node-${num}/conf/redis.conf:/etc/redis/redis.conf -d --net redis --ip 192.168.0.1${num} redis:5.0.9-alpine3.11 redis-server /etc/redis/redis.conf
+done
+```
+
+#### 构建集群
+
+```shell
+redis-cli --cluster create 192.168.0.11:6379 192.168.0.12:6379 192.168.0.13:6379 192.168.0.14:6379 192.168.0.15:6379 192.168.0.16:6379 --cluster-replicas 1
+```
 
