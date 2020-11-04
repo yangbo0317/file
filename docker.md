@@ -1,10 +1,14 @@
 
 
+# 镜像加速
+
+阿里云 `https://cr.console.aliyun.com/cn-hangzhou/instances/mirrors`
+
 #Docker常用命令
 
 ## 总结
 
-<img src="/Users/allin264/Library/Application Support/typora-user-images/image-20201101210424995.png" alt="image-20201101210424995" style="zoom:50%;" />
+![Alt text](https://upload-images.jianshu.io/upload_images/12842279-f5d4c22882f4a649.png)
 
 ```shell
 Commands:
@@ -435,7 +439,7 @@ docker exec -it 6ba2ebd7ab6a
 
 ```shell
 # 用完即删除
-doceker run -it --rm tomcat:9.0
+docker run -it --rm tomcat:9.0
 # 下载启动
 ➜  ~ docker pull tomcat
 Using default tag: latest
@@ -663,4 +667,586 @@ docker run -d -p 3306:3306 -v /Users/yangbo/docker/mysql/comf:/etc/mysql/conf.d 
 **测试数据同步**
 
 使用ni vaca t创建数据库，在docker中可以看到数据更新
+
+##三、具名挂载和匿名挂载
+
+```SHELL
+# -P 随机端口 -v 挂载
+docker run -d -P --name nginx01 -v /etc/nginx nginx
+# 查看所有的卷情况
+docker volume ls
+➜  ~ docker volume ls
+DRIVER              VOLUME NAME
+local               00a443e281a4a31e87efc2f8ef5b9e83d19c3719e9b28935093a63b73ddd615a
+local               2c5c6b3c246f24e25565b9dab3dd6488a2d16d1854e2e8b82b6c761f5368244b
+local               2cae6ec7a2a3d45e9a4597cc58b7693f010afa21cde3c29c4c7b1a6287924c9b
+local               2ee4ed9f6fc19dd1d6f3765a250ed32fe7b05401b878fe66bbae7336c9b6a376
+local               5ffc1dd7fbf05d131d9e99e0b2d2a8c07dccd4ddc45dcef3755344856c0395ca
+local               9c8000eea259e07e4df1a533dc907b9bf42ca16bf033bd5afd92c26e418f4bf7
+local               43ce19b919cc5e7069f16da6317bf2839b7e4f1decc920d11ca32328beebb840
+local               374e20ad87426efd90d3d41029573742daed3233640969a16830fb2d6d1749fd
+local               1604f7de3773e6506fc6c5a22419b555d9b49d7315887854321c67e49880e936
+local               4547eb4feb4d29b2835a02b59a25b325701a353f85bc96f3da1815e6698fb417
+local               997821d513b9b0da0696b34c24eb831237e1ae36f8e9519d76c09b136608707c
+local               c6ad8c011d6ff45b8026065280c79b6b5e306cc38714ca083e2987b74d7d0c08
+local               d13807c9e1935ec64eb65e72499cc07fc373a61516232e352d2f5575dbe7f617
+local               wordpress
+
+# 上面的每一行都是一个路径，匿名挂载 -v 只写了容器内的路径
+```
+
+```SHELL
+# 具名挂载 -v 卷名:容器内路径
+➜  ~ docker run -d -P --name=nginx02 -v juming-nginx:/etc/nginx nginx
+48d4cb4a9f83abf581c3722b5f36d71865f32285bd90565bb62c1f1c4884eba0
+➜  ~ docker volume ls
+DRIVER              VOLUME NAME
+local               00a443e281a4a31e87efc2f8ef5b9e83d19c3719e9b28935093a63b73ddd615a
+local               2c5c6b3c246f24e25565b9dab3dd6488a2d16d1854e2e8b82b6c761f5368244b
+local               2cae6ec7a2a3d45e9a4597cc58b7693f010afa21cde3c29c4c7b1a6287924c9b
+local               2ee4ed9f6fc19dd1d6f3765a250ed32fe7b05401b878fe66bbae7336c9b6a376
+local               5ffc1dd7fbf05d131d9e99e0b2d2a8c07dccd4ddc45dcef3755344856c0395ca
+local               9c8000eea259e07e4df1a533dc907b9bf42ca16bf033bd5afd92c26e418f4bf7
+local               43ce19b919cc5e7069f16da6317bf2839b7e4f1decc920d11ca32328beebb840
+local               374e20ad87426efd90d3d41029573742daed3233640969a16830fb2d6d1749fd
+local               1604f7de3773e6506fc6c5a22419b555d9b49d7315887854321c67e49880e936
+local               4547eb4feb4d29b2835a02b59a25b325701a353f85bc96f3da1815e6698fb417
+local               997821d513b9b0da0696b34c24eb831237e1ae36f8e9519d76c09b136608707c
+local               c6ad8c011d6ff45b8026065280c79b6b5e306cc38714ca083e2987b74d7d0c08
+local               d13807c9e1935ec64eb65e72499cc07fc373a61516232e352d2f5575dbe7f617
+local               juming-nginx
+local               wordpress
+
+# 查看容器的具体挂载地点
+➜  ~ docker volume inspect juming-nginx
+[
+    {
+        "CreatedAt": "2020-11-03T13:04:25Z",
+        "Driver": "local",
+        "Labels": null,
+        "Mountpoint": "/var/lib/docker/volumes/juming-nginx/_data",
+        "Name": "juming-nginx",
+        "Options": null,
+        "Scope": "local"
+    }
+]
+```
+
+```shell
+# 如何区分具名和匿名
+-v 容器内路径   匿名挂载
+-v 卷名:容器内路径 具名挂载
+-v /容器外路径:/容器内路径  指定路径挂载
+```
+
+拓展
+
+```shell
+# 通过 -v 容器内路径:容器外路径:ro rw 改变读写权限
+docker run -d -P --name=nginx -v juming-nginx:/etc/nginx:ro nginx
+docker run -d -P --name=nginx -v juming-nginx:/etc/nginx:rw nginx
+ro 只能通过宿主机来操作
+```
+
+##四、容器数据卷
+
+dockerfile是用来构建docker镜像文件
+
+###脚本文件构建
+
+```shell
+FROM centos
+
+VOLUME ["volume01","volume02"]
+
+CMD echo "====end======="
+
+CMD /bin/bash
+```
+
+###docker build 命令构建
+
+```shell
+# -f  Name of the Dockerfile (Default is 'PATH/Dockerfile') 脚本文件地址
+# -t  target string           Set the target build stage to build.  目标
+docker build -f centos-file -t yangbo/centos
+```
+
+```shell
+#查看构建好的镜像
+docker images
+➜  docker-test-volume docker images
+REPOSITORY            TAG                 IMAGE ID            CREATED             SIZE
+yangbo/centos         latest              772b59d94dbb        6 seconds ago       215MB
+mysql                 latest              db2b37ec6181        11 days ago         545MB
+kibana                7.9.3               f9f7fac59a10        2 weeks ago         1.18GB
+elasticsearch         7.9.3               1ab13f928dc8        2 weeks ago         742MB
+nginx                 latest              f35646e83998        3 weeks ago         133MB
+centos                latest              0d120b6ccaa8        2 months ago        215MB
+portainer/portainer   latest              62771b0b9b09        3 months ago        79.1MB
+```
+
+###运行容器
+
+```shell
+➜  docker-test-volume docker run -it yangbo/centos /bin/bash
+[root@e728dc38a446 /]# ls -l
+total 56
+lrwxrwxrwx   1 root root    7 May 11  2019 bin -> usr/bin
+drwxr-xr-x   5 root root  360 Nov  3 13:22 dev
+drwxr-xr-x   1 root root 4096 Nov  3 13:22 etc
+drwxr-xr-x   2 root root 4096 May 11  2019 home
+lrwxrwxrwx   1 root root    7 May 11  2019 lib -> usr/lib
+lrwxrwxrwx   1 root root    9 May 11  2019 lib64 -> usr/lib64
+drwx------   2 root root 4096 Aug  9 21:40 lost+found
+drwxr-xr-x   2 root root 4096 May 11  2019 media
+drwxr-xr-x   2 root root 4096 May 11  2019 mnt
+drwxr-xr-x   2 root root 4096 May 11  2019 opt
+dr-xr-xr-x 155 root root    0 Nov  3 13:22 proc
+dr-xr-x---   2 root root 4096 Aug  9 21:40 root
+drwxr-xr-x  11 root root 4096 Aug  9 21:40 run
+lrwxrwxrwx   1 root root    8 May 11  2019 sbin -> usr/sbin
+drwxr-xr-x   2 root root 4096 May 11  2019 srv
+dr-xr-xr-x  12 root root    0 Nov  3 13:22 sys
+drwxrwxrwt   7 root root 4096 Aug  9 21:40 tmp
+drwxr-xr-x  12 root root 4096 Aug  9 21:40 usr
+drwxr-xr-x  20 root root 4096 Aug  9 21:40 var
+drwxr-xr-x   2 root root 4096 Nov  3 13:22 volume01 # 脚本中挂载的目录【匿名挂载】
+drwxr-xr-x   2 root root 4096 Nov  3 13:22 volume02
+```
+
+###数据卷容器
+
+运行容器1
+
+```shell
+# 启动第一个容器
+docker run -it --name=docker01 yangbo/centos /bin/bash
+```
+
+```shell
+# 启动第二个容器
+docker run -it --name=docker02 --volumes-from docker01 yangbo/centos /bin/bash
+```
+
+```shell
+# 在第一个容器volume01中创建文件，查看第二个容器中的数据是否会同步创建
+[root@8c78fd9f8d46 volume01]# touch yangbo.txt
+[root@8c78fd9f8d46 volume01]# ls
+yangbo.txt
+# 第二个容器
+➜  ~ docker run -it --name=docker02 --volumes-from docker01 yangbo/centos
+[root@82913c6d2643 var]# cd ../volume01
+[root@82913c6d2643 volume01]# ls
+[root@82913c6d2643 volume01]# ls
+yangbo.txt
+```
+
+多个MySQL实现数据共享
+
+```shell
+# mysql01
+docker run -d -p 3310:3306 -v /etc/mysql/conf.d -v /var/lib/mysql -e MYSQL_ROOT_PASSWORD=123456 --name mysql01 mysql:5.7
+# mysql02
+docker run -d -p 3311:3306 -v /etc/mysql/conf.d -v /var/lib/mysql -e MYSQL_ROOT_PASSWORD=123456 --name mysql02 --volumes-from mysql01 mysql:5.7
+```
+
+## 五、dockerfile
+
+构建步骤
+
+1. 编写脚本文件
+2. docker build 构建成一个镜像
+3. docker run 
+4. Docker push 发布镜像
+
+![image-20201104111333895](/Users/allin264/Library/Application Support/typora-user-images/image-20201104111333895.png)
+
+很多官方镜像只提供最基本的功能，我们需要自己定制！
+
+### 一、Dockerfile的构建过程
+
+1. 每个保留关键字都是大写
+2. 从上到下执行
+3. "#"标识注释
+4. 每个指令都会创建一层镜像
+
+docker企业交付的标准---------开发、部署、运维
+
+dockerfile ：构建文件，定义了步骤，源代码
+
+DockerImages：通过dockerfile生成的镜像，最终发布的产品，从之前的war包、jar包变到现在的镜像
+
+docker容器：容器是镜像运行起来提供服务
+
+### 二、dockerfile指令
+
+![Alt text](https://img2018.cnblogs.com/i-beta/631711/201912/631711-20191220153130957-348455400.png)
+
+```shell
+FROM 			# 基础镜像
+MINTAINER # 镜像是谁写的，姓名+邮箱
+RUN 			# docker镜像需要运行的命令
+ADD				# 步骤，Tomcat镜像Tomcat压缩包就是要添加的内容
+WORKDIR   # 镜像的工作目录
+VOLUME		# 挂载的目录
+EXPOSE		# 暴露端口配置 与-p是一样的
+RUN				# 最终要运行的
+CMD				# 容器启动的时候要运行的命令	只有最后一个会生效
+ENTRYPOINT# 指定这个容器启动的时候运行的命令 可以追加命令
+ONBUILD 	# 当构建一个被继承的dockerfile 这个时候会运行ONBUILD 。触发指令
+COPY 			# 将文件拷贝到镜像中
+ENV				# 构建的时候设置环境变量 ES设置JVM大小
+```
+
+###三、实战测试----构建自己centos
+
+####一、创建一个自己的centos
+
+```shell
+➜  dockerfile cat mydockerfile-centos
+FROM centos
+MAINTAINER yangbo<yangbo@gmail.com>
+
+ENV MYPATH /usr/local
+WORKDIR $MYPATH
+RUN yum -y install vim
+RUN yum -y install net-tools
+EXPOSE 80
+
+CMD echo $MYPATH
+
+CMD echo "----end----"
+
+CMD /bin/bash
+```
+
+>通过文件构建镜像
+
+```
+Successfully built c5533b5222d6
+Successfully tagged mycentos:0.1
+```
+
+> 测试运行
+
+```shell
+# 默认是工作目录
+# 可以使用ifconfig\vim 等命令
+➜  dockerfile docker run -it mycentos:0.1 /bin/bash
+[root@62e0113e1827 local]# pwd
+/usr/local
+[root@62e0113e1827 local]# ifconfig
+eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 172.17.0.6  netmask 255.255.0.0  broadcast 172.17.255.255
+        ether 02:42:ac:11:00:06  txqueuelen 0  (Ethernet)
+        RX packets 8  bytes 656 (656.0 B)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 0  bytes 0 (0.0 B)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+lo: flags=73<UP,LOOPBACK,RUNNING>  mtu 65536
+        inet 127.0.0.1  netmask 255.0.0.0
+        loop  txqueuelen 1000  (Local Loopback)
+        RX packets 0  bytes 0 (0.0 B)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 0  bytes 0 (0.0 B)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+[root@62e0113e1827 local]# vim test
+[root@62e0113e1827 local]#
+```
+
+####二、nginx镜像的构建过程
+
+```shell
+➜  dockerfile docker history c5533b5222d6
+IMAGE               CREATED             CREATED BY                                      SIZE                COMMENT
+c5533b5222d6        4 minutes ago       /bin/sh -c #(nop)  CMD ["/bin/sh" "-c" "/bin…   0B
+44870844492c        4 minutes ago       /bin/sh -c #(nop)  CMD ["/bin/sh" "-c" "echo…   0B
+3fe3539c0cd8        4 minutes ago       /bin/sh -c #(nop)  CMD ["/bin/sh" "-c" "echo…   0B
+3ecf5563876c        4 minutes ago       /bin/sh -c #(nop)  EXPOSE 80                    0B
+4aee5148c344        4 minutes ago       /bin/sh -c yum -y install net-tools             22.8MB
+114fb3d4d17e        5 minutes ago       /bin/sh -c yum -y install vim                   57.3MB
+d26f6bd9005f        7 minutes ago       /bin/sh -c #(nop) WORKDIR /usr/local            0B
+ee000c864720        7 minutes ago       /bin/sh -c #(nop)  ENV MYPATH=/usr/local        0B
+f1ec13093dff        7 minutes ago       /bin/sh -c #(nop)  MAINTAINER yangbo<yangbo@…   0B
+0d120b6ccaa8        2 months ago        /bin/sh -c #(nop)  CMD ["/bin/bash"]            0B
+<missing>           2 months ago        /bin/sh -c #(nop)  LABEL org.label-schema.sc…   0B
+<missing>           2 months ago        /bin/sh -c #(nop) ADD file:538afc0c5c964ce0d…   215MB
+```
+
+####三、MySQL的构建过程
+
+```shell
+➜  dockerfile docker history db2b37ec6181
+IMAGE               CREATED             CREATED BY                                      SIZE                COMMENT
+db2b37ec6181        12 days ago         /bin/sh -c #(nop)  CMD ["mysqld"]               0B
+<missing>           12 days ago         /bin/sh -c #(nop)  EXPOSE 3306 33060            0B
+<missing>           12 days ago         /bin/sh -c #(nop)  ENTRYPOINT ["docker-entry…   0B
+<missing>           12 days ago         /bin/sh -c ln -s usr/local/bin/docker-entryp…   34B
+<missing>           12 days ago         /bin/sh -c #(nop) COPY file:f9202f6b715c0e78…   13.1kB
+<missing>           2 weeks ago         /bin/sh -c #(nop) COPY dir:2e040acc386ebd23b…   1.12kB
+<missing>           2 weeks ago         /bin/sh -c #(nop)  VOLUME [/var/lib/mysql]      0B
+<missing>           2 weeks ago         /bin/sh -c {   echo mysql-community-server m…   410MB
+<missing>           2 weeks ago         /bin/sh -c echo "deb http://repo.mysql.com/a…   55B
+<missing>           2 weeks ago         /bin/sh -c #(nop)  ENV MYSQL_VERSION=8.0.22-…   0B
+<missing>           3 weeks ago         /bin/sh -c #(nop)  ENV MYSQL_MAJOR=8.0          0B
+<missing>           3 weeks ago         /bin/sh -c set -ex;  key='A4A9406876FCBD3C45…   2.61kB
+<missing>           3 weeks ago         /bin/sh -c apt-get update && apt-get install…   52.2MB
+<missing>           3 weeks ago         /bin/sh -c mkdir /docker-entrypoint-initdb.d    0B
+<missing>           3 weeks ago         /bin/sh -c set -eux;  savedAptMark="$(apt-ma…   4.17MB
+<missing>           3 weeks ago         /bin/sh -c #(nop)  ENV GOSU_VERSION=1.12        0B
+<missing>           3 weeks ago         /bin/sh -c apt-get update && apt-get install…   9.34MB
+<missing>           3 weeks ago         /bin/sh -c groupadd -r mysql && useradd -r -…   329kB
+<missing>           3 weeks ago         /bin/sh -c #(nop)  CMD ["bash"]                 0B
+<missing>           3 weeks ago         /bin/sh -c #(nop) ADD file:0dc53e7886c35bc21…   69.2MB
+```
+
+####四、CMD---ENTRYPOINT测试
+
+```shell
+➜  dockerfile cat docker-cmd-test
+FROM centos
+CMD ["ls","-a"]
+# 测试追加命令---结果报错
+➜  dockerfile docker run docker-cmd-test -l
+docker: Error response from daemon: OCI runtime create failed: container_linux.go:349: starting container process caused "exec: \"-l\": executable file not found in $PATH": unknown.
+```
+
+```shell
+➜  dockerfile cat docker-expose-test
+FROM centos
+ENTRYPOINT ["ls","-a"]
+# 测试追加命令
+➜  dockerfile docker run -it docker-expose-test -l
+total 56
+drwxr-xr-x   1 root root 4096 Nov  4 04:12 .
+drwxr-xr-x   1 root root 4096 Nov  4 04:12 ..
+-rwxr-xr-x   1 root root    0 Nov  4 04:12 .dockerenv
+lrwxrwxrwx   1 root root    7 May 11  2019 bin -> usr/bin
+drwxr-xr-x   5 root root  360 Nov  4 04:12 dev
+drwxr-xr-x   1 root root 4096 Nov  4 04:12 etc
+drwxr-xr-x   2 root root 4096 May 11  2019 home
+lrwxrwxrwx   1 root root    7 May 11  2019 lib -> usr/lib
+lrwxrwxrwx   1 root root    9 May 11  2019 lib64 -> usr/lib64
+drwx------   2 root root 4096 Aug  9 21:40 lost+found
+drwxr-xr-x   2 root root 4096 May 11  2019 media
+drwxr-xr-x   2 root root 4096 May 11  2019 mnt
+drwxr-xr-x   2 root root 4096 May 11  2019 opt
+dr-xr-xr-x 158 root root    0 Nov  4 04:12 proc
+dr-xr-x---   2 root root 4096 Aug  9 21:40 root
+drwxr-xr-x  11 root root 4096 Aug  9 21:40 run
+lrwxrwxrwx   1 root root    8 May 11  2019 sbin -> usr/sbin
+drwxr-xr-x   2 root root 4096 May 11  2019 srv
+dr-xr-xr-x  12 root root    0 Nov  3 13:22 sys
+drwxrwxrwt   7 root root 4096 Aug  9 21:40 tmp
+drwxr-xr-x  12 root root 4096 Aug  9 21:40 usr
+drwxr-xr-x  20 root root 4096 Aug  9 21:40 var
+```
+
+#### 五、制作Tomcat镜像
+
+#####一、编写脚本
+
+```shell
+FROM centos
+MAINTAINER yangbo<yangbogod@gmail.com>
+
+COPY readme.txt /usr/local/readme.txt
+
+ADD jdk-8u271-linux-x64.tar.gz /usr/local/
+
+ADD apache-tomcat-9.0.39.tar.gz /usr/local/
+
+RUN yum -y install vim
+
+ENV MYPATH /usr/local
+
+WORKDIR $MYPATH
+
+ENV JAVA_HOME /usr/local/jdk1.8.0_271
+
+ENV CLASSPATH $JAVA_HOME/lib/dt.jar:$JAVA_HOME/lib/tools.jar
+
+ENV CATALINA_HOME /usr/local/apache-tomcat-9.0.39
+
+ENV CATALINA_BASE /usr/local/apache-tomcat-9.0.39
+
+ENV PATH $PATH:$JAVA_HOME/bin:$CATALINA_HOME/lib:$CATALINA_HOME/bin
+
+EXPOSE 8080
+
+CMD /usr/local/apache-tomcat-9.0.39/bin/startup.sh && tail -F /usr/local/apache-tomcat-9.0.39/bin/logs/catalina.out
+
+```
+
+#####二、构建镜像
+
+```shell
+# 制作镜像
+docker build -t diytomcat .
+
+Sending build context to Docker daemon  149.1MB
+Step 1/15 : FROM centos
+ ---> 0d120b6ccaa8
+Step 2/15 : MAINTAINER yangbo<yangbogod@gmail.com>
+ ---> Running in a7ff5b67249a
+Removing intermediate container a7ff5b67249a
+ ---> c45c430479f8
+Step 3/15 : COPY readme.txt /usr/local/readme.txt
+ ---> 915735a9cddc
+Step 4/15 : ADD jdk-8u271-linux-x64.tar.gz /usr/local/
+ ---> c3c705b4af3e
+Step 5/15 : ADD apache-tomcat-9.0.39-src.tar.gz /usr/local/
+ ---> d7b8431db4b8
+Step 6/15 : RUN yum -y install vim
+ ---> Running in 8146d31b4fc2
+CentOS-8 - AppStream                            730 kB/s | 5.8 MB     00:08
+CentOS-8 - Base                                 1.3 MB/s | 2.2 MB     00:01
+CentOS-8 - Extras                               3.3 kB/s | 8.1 kB     00:02
+Dependencies resolved.
+================================================================================
+ Package             Arch        Version                   Repository      Size
+================================================================================
+Installing:
+ vim-enhanced        x86_64      2:8.0.1763-13.el8         AppStream      1.4 M
+Installing dependencies:
+ gpm-libs            x86_64      1.20.7-15.el8             AppStream       39 k
+ vim-common          x86_64      2:8.0.1763-13.el8         AppStream      6.3 M
+ vim-filesystem      noarch      2:8.0.1763-13.el8         AppStream       48 k
+ which               x86_64      2.21-12.el8               BaseOS          49 k
+
+Transaction Summary
+================================================================================
+Install  5 Packages
+
+Total download size: 7.8 M
+Installed size: 31 M
+Downloading Packages:
+(1/5): vim-enhanced-8.0.1763-13.el8.x86_64.rpm  1.1 MB/s | 1.4 MB     00:01
+(2/5): gpm-libs-1.20.7-15.el8.x86_64.rpm         29 kB/s |  39 kB     00:01
+(3/5): vim-common-8.0.1763-13.el8.x86_64.rpm    4.2 MB/s | 6.3 MB     00:01
+(4/5): vim-filesystem-8.0.1763-13.el8.noarch.rp  68 kB/s |  48 kB     00:00
+(5/5): which-2.21-12.el8.x86_64.rpm              42 kB/s |  49 kB     00:01
+--------------------------------------------------------------------------------
+Total                                           2.0 MB/s | 7.8 MB     00:03
+warning: /var/cache/dnf/AppStream-02e86d1c976ab532/packages/gpm-libs-1.20.7-15.el8.x86_64.rpm: Header V3 RSA/SHA256 Signature, key ID 8483c65d: NOKEY
+CentOS-8 - AppStream                            1.1 MB/s | 1.6 kB     00:00
+Importing GPG key 0x8483C65D:
+ Userid     : "CentOS (CentOS Official Signing Key) <security@centos.org>"
+ Fingerprint: 99DB 70FA E1D7 CE22 7FB6 4882 05B5 55B3 8483 C65D
+ From       : /etc/pki/rpm-gpg/RPM-GPG-KEY-centosofficial
+Key imported successfully
+Running transaction check
+Transaction check succeeded.
+Running transaction test
+Transaction test succeeded.
+Running transaction
+  Preparing        :                                                        1/1
+  Installing       : which-2.21-12.el8.x86_64                               1/5
+  Installing       : vim-filesystem-2:8.0.1763-13.el8.noarch                2/5
+  Installing       : vim-common-2:8.0.1763-13.el8.x86_64                    3/5
+  Installing       : gpm-libs-1.20.7-15.el8.x86_64                          4/5
+  Running scriptlet: gpm-libs-1.20.7-15.el8.x86_64                          4/5
+  Installing       : vim-enhanced-2:8.0.1763-13.el8.x86_64                  5/5
+  Running scriptlet: vim-enhanced-2:8.0.1763-13.el8.x86_64                  5/5
+  Running scriptlet: vim-common-2:8.0.1763-13.el8.x86_64                    5/5
+  Verifying        : gpm-libs-1.20.7-15.el8.x86_64                          1/5
+  Verifying        : vim-common-2:8.0.1763-13.el8.x86_64                    2/5
+  Verifying        : vim-enhanced-2:8.0.1763-13.el8.x86_64                  3/5
+  Verifying        : vim-filesystem-2:8.0.1763-13.el8.noarch                4/5
+  Verifying        : which-2.21-12.el8.x86_64                               5/5
+
+Installed:
+  gpm-libs-1.20.7-15.el8.x86_64         vim-common-2:8.0.1763-13.el8.x86_64
+  vim-enhanced-2:8.0.1763-13.el8.x86_64 vim-filesystem-2:8.0.1763-13.el8.noarch
+  which-2.21-12.el8.x86_64
+
+Complete!
+Removing intermediate container 8146d31b4fc2
+ ---> afc59a01253b
+Step 7/15 : ENV MYPATH /usr/local
+ ---> Running in 052e655d222d
+Removing intermediate container 052e655d222d
+ ---> 931ea5a59529
+Step 8/15 : WORKDIR $MYPATH
+ ---> Running in a6a0fd42e925
+Removing intermediate container a6a0fd42e925
+ ---> c84d3577d755
+Step 9/15 : ENV JAVA_HOME /usr/local/jdk1.8.0_271
+ ---> Running in 26f2999dc5fa
+Removing intermediate container 26f2999dc5fa
+ ---> ac059874519b
+Step 10/15 : ENV CLASSPATH $JAVA_HOME/lib/dt.jar:$JAVA_HOME/lib/tools.jar
+ ---> Running in 5b73421990e4
+Removing intermediate container 5b73421990e4
+ ---> b3e7b8cf1539
+Step 11/15 : ENV CATALINA_HOME /usr/local/apache-tomcat-9.0.39-src
+ ---> Running in f69c349c386a
+Removing intermediate container f69c349c386a
+ ---> c04c48aaf1b7
+Step 12/15 : ENV CATALINA_BASE /usr/local/apache-tomcat-9.0.39-src
+ ---> Running in 5424a60fd234
+Removing intermediate container 5424a60fd234
+ ---> 0269c2c61713
+Step 13/15 : ENV PATH $PATH:$JAVA_HOME/bin:$CATALINA_HOME/lib:$CATALINA_HOME/bin
+ ---> Running in bf8223144155
+Removing intermediate container bf8223144155
+ ---> f25c2b57d233
+Step 14/15 : EXPOSE 8080
+ ---> Running in 3edef9e8f723
+Removing intermediate container 3edef9e8f723
+ ---> e564448058a9
+Step 15/15 : CMD /usr/local/apache-tomcat-9.0.39-src/bin/startup.sh && tail -F /usr/local/apache-tomcat-9.0.39-src/bin/logs/catalina.out
+ ---> Running in 3f145cffcc17
+Removing intermediate container 3f145cffcc17
+ ---> 1e4c4bc41d7b
+Successfully built 1e4c4bc41d7b
+Successfully tagged diytomcat:latest
+```
+
+##### 三、启动容器
+
+```shell
+docker run -d -p 9090:8080 --name yangbotomcat -v /Users/allin264/docker/tomcat/test:/usr/local/apache-tomcat-9.0.39/webapps/test -v /Users/allin264/docker/tomcat/tomcatlogs/:/usr/local/apache-tomcat-9.0.39/logs diytomcat
+```
+
+##### 四、发布项目
+
+```xml
+<web-app xmlns="http://xmlns.jcp.org/xml/ns/javaee"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee
+         http://xmlns.jcp.org/xml/ns/javaee/web-app_3_1.xsd"
+         version="3.1">
+    
+</web-app>
+```
+
+```html
+<html>
+<head><title>Hello World</title></head>
+<body>
+Hello World!<br/>
+<%
+out.println("Your IP address is " + request.getRemoteAddr());
+%>
+</body>
+</html>
+```
+
+##### 五、访问
+
+Localhost:9090/test
+
+![image-20201104133935788](/Users/allin264/Library/Application Support/typora-user-images/image-20201104133935788.png)
+
+### 四、发布镜像到阿里云
+
+![image-20201104134737512](/Users/allin264/Library/Application Support/typora-user-images/image-20201104134737512.png)
+
+
+
+## 五、docker网络
 
